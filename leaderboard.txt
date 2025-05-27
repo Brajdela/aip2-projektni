@@ -1,4 +1,8 @@
+DAVID 2
 JA 1
-TI 0
-guza 0
+david 1
 žigicaaaaa 1
+KARLO 0
+TI 0
+brajdic 0
+guza 0

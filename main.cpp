@@ -4,6 +4,7 @@
 #include <string>
 #include <iomanip>
 #include <map>
+#include <algorithm>
 
 using namespace std;
 
@@ -17,7 +18,8 @@ const string CYAN = "\033[1;36m";
 const string RESET = "\033[0m";
 
 // ASCII naslov
-void showTitle() {
+void showTitle()
+{
     cout << CYAN;
     cout << R"(
   _  __     _        _       _     _            
@@ -32,17 +34,21 @@ void showTitle() {
         | |    / _ \ '__| / __| |/ _ \| '_ \    
         | \__/\  __/ |  | \__ \ | (_) | | | |   
          \____/\___|_|  |_|___/_|\___/|_| |_|   
-    )" << RESET << "\n";
-    cout << YELLOW << "                          Dobrodošli u igru Križić-Kružić! 🎮\n" << RESET;
+    )" << RESET
+         << "\n";
+    cout << YELLOW << "                          Dobrodošli u igru Križić-Kružić! 🎮\n"
+         << RESET;
 }
 
-struct Player {
+struct Player
+{
     string name;
     char symbol;
     int wins = 0;
 };
 
-class Game {
+class Game
+{
 private:
     char board[3][3];
     Player player1, player2;
@@ -50,11 +56,13 @@ private:
     bool gameLoaded = false;
 
 public:
-    Game() {
+    Game()
+    {
         resetBoard();
     }
 
-    void addPlayers() {
+    void addPlayers()
+    {
         cout << MAGENTA << "👤 Unesite ime igrača 1: " << RESET;
         cin >> player1.name;
         player1.symbol = 'X';
@@ -64,49 +72,61 @@ public:
         player2.symbol = 'O';
 
         player1Turn = true;
-        cout << GREEN << "✅ Igrači su dodani!\n" << RESET;
+        cout << GREEN << "✅ Igrači su dodani!\n"
+             << RESET;
     }
 
-    void resetBoard() {
+    void resetBoard()
+    {
         char start = '1';
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
                 board[i][j] = start++;
     }
 
-    void displayBoard() {
+    void displayBoard()
+    {
         cout << "\n";
-        for (int i = 0; i < 3; ++i) {
+        for (int i = 0; i < 3; ++i)
+        {
             cout << " ";
-            for (int j = 0; j < 3; ++j) {
+            for (int j = 0; j < 3; ++j)
+            {
                 cout << CYAN << board[i][j] << RESET;
-                if (j < 2) cout << " | ";
+                if (j < 2)
+                    cout << " | ";
             }
-            if (i < 2) cout << "\n-----------\n";
+            if (i < 2)
+                cout << "\n-----------\n";
         }
         cout << "\n";
     }
 
-    bool makeMove(int position) {
+    bool makeMove(int position)
+    {
         char posChar = position + '0';
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
-                if (board[i][j] == posChar) {
+                if (board[i][j] == posChar)
+                {
                     board[i][j] = getCurrentPlayer().symbol;
                     return true;
                 }
         return false;
     }
 
-    Player& getCurrentPlayer() {
+    Player &getCurrentPlayer()
+    {
         return player1Turn ? player1 : player2;
     }
 
-    Player& getOtherPlayer() {
+    Player &getOtherPlayer()
+    {
         return player1Turn ? player2 : player1;
     }
 
-    bool checkWin() {
+    bool checkWin()
+    {
         char s = getCurrentPlayer().symbol;
         for (int i = 0; i < 3; ++i)
             if ((board[i][0] == s && board[i][1] == s && board[i][2] == s) ||
@@ -118,18 +138,22 @@ public:
         return false;
     }
 
-    bool isDraw() {
+    bool isDraw()
+    {
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
-                if (isdigit(board[i][j])) return false;
+                if (isdigit(board[i][j]))
+                    return false;
         return true;
     }
 
-    void switchTurn() {
+    void switchTurn()
+    {
         player1Turn = !player1Turn;
     }
 
-    void saveGame() {
+    void saveGame()
+    {
         ofstream file("savegame.txt");
         file << player1.name << " " << player1.wins << "\n";
         file << player2.name << " " << player2.wins << "\n";
@@ -138,87 +162,138 @@ public:
             for (int j = 0; j < 3; ++j)
                 file << board[i][j];
         file.close();
-        cout << GREEN << "💾 Igra je snimljena!\n" << RESET;
+        cout << GREEN << "💾 Igra je snimljena!\n"
+             << RESET;
     }
 
-    bool loadGame() {
+    bool loadGame()
+    {
         ifstream file("savegame.txt");
-        if (!file.is_open()) {
-            cout << RED << "⚠️  Nema snimljene igre.\n" << RESET;
+        if (!file.is_open())
+        {
+            cout << RED << "⚠️  Nema snimljene igre.\n"
+                 << RESET;
             return false;
         }
+
         file >> player1.name >> player1.wins;
         file >> player2.name >> player2.wins;
         file >> player1Turn;
 
         char c;
         for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j) {
-                file >> c;
-                board[i][j] = c;
-            }
+            for (int j = 0; j < 3; ++j)
+                file >> board[i][j];
+
+        if (file.peek() == EOF)
+        {
+            cout << RED << "⚠️  Datoteka s igrom je prazna ili oštećena.\n"
+                 << RESET;
+            return false;
+        }
 
         file.close();
         gameLoaded = true;
-        cout << GREEN << "📂 Prethodna igra je učitana!\n" << RESET;
+        cout << GREEN << "📂 Prethodna igra je učitana!\n"
+             << RESET;
         return true;
     }
 
-    void play() {
-        if (!gameLoaded && (player1.name.empty() || player2.name.empty())) {
-            cout << RED << "⚠️  Prvo dodajte igrače!\n" << RESET;
+    void play()
+    {
+        if (!gameLoaded && (player1.name.empty() || player2.name.empty()))
+        {
+            cout << RED << "⚠️  Prvo dodajte igrače!\n"
+                 << RESET;
             return;
         }
         int move;
         if (!gameLoaded)
             resetBoard();
 
-        while (true) {
+        while (true)
+        {
             displayBoard();
             cout << YELLOW << "🎲 " << getCurrentPlayer().name << " (" << getCurrentPlayer().symbol << "), unesite potez (1-9): " << RESET;
             cin >> move;
-            if (!makeMove(move)) {
-                cout << RED << "❌ Neispravan potez!\n" << RESET;
+            if (!makeMove(move))
+            {
+                cout << RED << "❌ Neispravan potez!\n"
+                     << RESET;
                 continue;
             }
-            if (checkWin()) {
+            if (checkWin())
+            {
                 displayBoard();
-                cout << GREEN << "🏆 Čestitke! 🎉 Igrač " << getCurrentPlayer().name << " je pobijedio! 🥳\n" << RESET;
+                cout << GREEN << "🏆 Čestitke! 🎉 Igrač " << getCurrentPlayer().name << " je pobijedio! 🥳\n"
+                     << RESET;
                 getCurrentPlayer().wins++;
                 updateLeaderboard();
                 break;
             }
-            if (isDraw()) {
+            if (isDraw())
+            {
                 displayBoard();
-                cout << YELLOW << "🤝 Neriješeno!\n" << RESET;
+                cout << YELLOW << "🤝 Neriješeno!\n"
+                     << RESET;
                 break;
             }
             switchTurn();
         }
+
         saveGame();
         gameLoaded = false;
+        cout << YELLOW << "Pritisnite Enter za povratak u izbornik..." << RESET;
+        cin.ignore();
+        cin.get();
     }
 
-    void showRules() {
-        cout << BLUE << "\n📘 Pravila Križić-Kružić\n" << RESET;
-        cout << "1️⃣  Dva igrača naizmjenično biraju pozicije od 1 do 9.\n";
-        cout << "2️⃣  Cilj je složiti 3 ista znaka (X ili O) u liniji.\n";
-        cout << "3️⃣  Ako je ploča puna, a nitko nije pobijedio – igra je neriješena.\n";
-        cout << "4️⃣  Igra se može spremiti i ponovno učitati.\n";
+    void showRules()
+    {
+        cout << BLUE << "\n📘 PRAVILA IGRE KRIŽIĆ-KRUŽIĆ 🎮\n"
+             << RESET;
+        cout << GREEN << "=====================================\n"
+             << RESET;
+        cout << YELLOW << "🎯 Cilj: " << RESET << "Složiti 3 znaka (X ili O) u red, stupac ili dijagonalu.\n";
+        cout << CYAN << "🔁 Naizmjenično igranje: " << RESET << "Igrači biraju pozicije od 1 do 9.\n";
+        cout << MAGENTA << "❌❌❌ Kraj igre: " << RESET << "Pobjeda, neriješeno ili puna ploča.\n";
+        cout << RED << "💾 Snimanje igre: " << RESET << "Igru možete spremiti i kasnije učitati.\n";
+        cout << GREEN << "=====================================\n"
+             << RESET;
     }
 
-    void showLeaderboard() {
-        cout << MAGENTA << "\n📊 Leaderboard:\n" << RESET;
+    void showLeaderboard()
+    {
+        cout << MAGENTA << "\n🏆 LEADERBOARD - Najbolji igrači:\n"
+             << RESET;
         ifstream file("leaderboard.txt");
+        if (!file)
+        {
+            cout << RED << "⚠️  Nema dostupnih podataka.\n"
+                 << RESET;
+            return;
+        }
+
+        vector<pair<string, int>> entries;
         string name;
         int wins;
-        while (file >> name >> wins) {
-            cout << "🏅 " << name << " - " << wins << " pobjeda\n";
-        }
+        while (file >> name >> wins)
+            entries.push_back({name, wins});
         file.close();
+
+        sort(entries.begin(), entries.end(), [](auto &a, auto &b)
+             { return b.second < a.second; });
+
+        int rank = 1;
+        for (auto &entry : entries)
+        {
+            cout << YELLOW << rank++ << ". " << entry.first << " - " << entry.second << " pobjeda 🎖️\n"
+                 << RESET;
+        }
     }
 
-    void updateLeaderboard() {
+    void updateLeaderboard()
+    {
         map<string, int> scores;
         ifstream infile("leaderboard.txt");
         string name;
@@ -227,21 +302,28 @@ public:
             scores[name] = wins;
         infile.close();
 
-        scores[player1.name] = player1.wins;
-        scores[player2.name] = player2.wins;
+        scores[player1.name] = max(scores[player1.name], player1.wins);
+        scores[player2.name] = max(scores[player2.name], player2.wins);
+
+        vector<pair<string, int>> sorted(scores.begin(), scores.end());
+        sort(sorted.begin(), sorted.end(), [](auto &a, auto &b)
+             { return b.second < a.second; });
 
         ofstream outfile("leaderboard.txt");
-        for (auto& pair : scores)
+        for (auto &pair : sorted)
             outfile << pair.first << " " << pair.second << "\n";
         outfile.close();
     }
 };
 
-void showMenu(Game& game) {
+void showMenu(Game &game)
+{
     int choice;
-    do {
+    do
+    {
         showTitle();
-        cout << YELLOW << "\n📋 GLAVNI IZBORNIK:\n" << RESET;
+        cout << YELLOW << "\n📋 GLAVNI IZBORNIK:\n"
+             << RESET;
         cout << "1️⃣  Dodaj igrače 👥\n";
         cout << "2️⃣  Pokreni novu igru 🎮\n";
         cout << "3️⃣  Učitaj prethodnu igru 💾\n";
@@ -251,22 +333,42 @@ void showMenu(Game& game) {
         cout << CYAN << "Unesite izbor: " << RESET;
         cin >> choice;
 
-        switch (choice) {
-            case 1: game.addPlayers(); break;
-            case 2: game.play(); break;
-            case 3: if (game.loadGame()) game.play(); break;
-            case 4: game.showRules(); break;
-            case 5: game.showLeaderboard(); break;
-            case 6: cout << GREEN << "👋 Hvala što ste igrali!\n" << RESET; break;
-            default: cout << RED << "⚠️  Neispravan unos.\n" << RESET; break;
+        switch (choice)
+        {
+        case 1:
+            game.addPlayers();
+            break;
+        case 2:
+            game.play();
+            break;
+        case 3:
+            if (game.loadGame())
+                game.play();
+            break;
+        case 4:
+            game.showRules();
+            break;
+        case 5:
+            game.showLeaderboard();
+            break;
+        case 6:
+            cout << GREEN << "👋 Hvala što ste igrali!\n"
+                 << RESET;
+            break;
+        default:
+            cout << RED << "⚠️  Neispravan unos.\n"
+                 << RESET;
+            break;
         }
 
-        cout << "\n" << string(60, '=') << "\n";
+        cout << "\n"
+             << string(60, '=') << "\n";
 
     } while (choice != 6);
 }
 
-int main() {
+int main()
+{
     Game game;
     showMenu(game);
     return 0;
