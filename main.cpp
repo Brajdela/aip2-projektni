@@ -23,14 +23,32 @@ void showTitle()
 {
     cout << CYAN;
     cout << R"(
-  _  __     _       _      _          _        _      
- | |/ /__ _| |__   (_) ___| |__   ___| |_ __ _| | ___ 
- | ' // _` | '_ \  | |/ __| '_ \ / _ \ __/ _` | |/ _ \
- | . \ (_| | | | | | | (__| | | |  __/ || (_| | |  __/
- |_|\_\__,_|_| |_| |_|\___|_| |_|\___|\__\__,_|_|\___|
+********************************************************
+* __                  __            __                 *
+*|  \                |  \          |  \                *
+*| $$   __   ______   \$$ ________  \$$  _______       *
+*| $$  /  \ /      \ |  \|        \|  \ /       \      *
+*| $$_/  $$|  $$$$$$\| $$ \$$$$$$$$| $$|  $$$$$$$      *
+*| $$   $$ | $$   \$$| $$  /    $$ | $$| $$            *
+*| $$$$$$\ | $$      | $$ /  $$$$_ | $$| $$_____       *
+*| $$  \$$\| $$      | $$|  $$    \| $$ \$$     \      *
+* \$$   \$$ \$$       \$$ \$$$$$$$$ \$$  \$$$$$$$      *
+*                                                      *
+*                                                      *
+*                                                      *
+* __                                      __           *
+*|  \                                    |  \          *
+*| $$   __   ______   __    __  ________  \$$  _______ *
+*| $$  /  \ /      \ |  \  |  \|        \|  \ /       \*
+*| $$_/  $$|  $$$$$$\| $$  | $$ \$$$$$$$$| $$|  $$$$$$$*
+*| $$   $$ | $$   \$$| $$  | $$  /    $$ | $$| $$      *
+*| $$$$$$\ | $$      | $$__/ $$ /  $$$$_ | $$| $$_____ *
+*| $$  \$$\| $$       \$$    $$|  $$    \| $$ \$$     \*
+* \$$   \$$ \$$        \$$$$$$  \$$$$$$$$ \$$  \$$$$$$$*
+********************************************************
     )" << RESET
          << "\n";
-    cout << YELLOW << "                     Dobrodošli u igru Križić-Kružić! 🎮\n"
+    cout << YELLOW << "                         Dobrodošli u igru Križić-Kružić! \n\n David Brajdić i David Lisec 🎮\n"
          << RESET;
 }
 
@@ -58,11 +76,11 @@ public:
     void addPlayers()
     {
         cout << MAGENTA << "👤 Unesite ime igrača 1: " << RESET;
-        getline(cin >> ws, player1.name);
+        getline(cin, player1.name);
         player1.symbol = 'X';
 
         cout << MAGENTA << "👤 Unesite ime igrača 2: " << RESET;
-        getline(cin >> ws, player2.name);
+        getline(cin, player2.name);
         player2.symbol = 'O';
 
         player1Turn = true;
@@ -96,6 +114,9 @@ public:
         cout << "\n";
     }
 
+    Player &getCurrentPlayer() { return player1Turn ? player1 : player2; }
+    Player &getOtherPlayer() { return player1Turn ? player2 : player1; }
+
     bool makeMove(int position)
     {
         char posChar = position + '0';
@@ -107,16 +128,6 @@ public:
                     return true;
                 }
         return false;
-    }
-
-    Player &getCurrentPlayer()
-    {
-        return player1Turn ? player1 : player2;
-    }
-
-    Player &getOtherPlayer()
-    {
-        return player1Turn ? player2 : player1;
     }
 
     bool checkWin()
@@ -141,41 +152,32 @@ public:
         return true;
     }
 
-    void switchTurn()
-    {
-        player1Turn = !player1Turn;
-    }
+    void switchTurn() { player1Turn = !player1Turn; }
 
     void saveGame()
     {
-        ofstream file("savegame.bin", ios::binary);
-        size_t len1 = player1.name.size();
-        size_t len2 = player2.name.size();
-
+        ofstream file("savegame.dat", ios::binary);
+        size_t len1 = player1.name.size(), len2 = player2.name.size();
         file.write((char *)&len1, sizeof(len1));
         file.write(player1.name.c_str(), len1);
-        file.write((char *)&player1.wins, sizeof(int));
+        file.write((char *)&player1.wins, sizeof(player1.wins));
 
         file.write((char *)&len2, sizeof(len2));
         file.write(player2.name.c_str(), len2);
-        file.write((char *)&player2.wins, sizeof(int));
-
+        file.write((char *)&player2.wins, sizeof(player2.wins));
         file.write((char *)&player1Turn, sizeof(player1Turn));
-
-        for (int i = 0; i < 3; ++i)
-            file.write(board[i], 3);
-
+        file.write((char *)board, sizeof(board));
         file.close();
-        cout << GREEN << "💾 Igra je snimljena!\n"
+        cout << GREEN << "💾 Igra je spremljena!\n"
              << RESET;
     }
 
     bool loadGame()
     {
-        ifstream file("savegame.bin", ios::binary);
+        ifstream file("savegame.dat", ios::binary);
         if (!file)
         {
-            cout << RED << "⚠️ Nema snimljene igre.\n"
+            cout << RED << "⚠️ Nema spremljene igre.\n"
                  << RESET;
             return false;
         }
@@ -184,21 +186,18 @@ public:
         file.read((char *)&len1, sizeof(len1));
         player1.name.resize(len1);
         file.read(&player1.name[0], len1);
-        file.read((char *)&player1.wins, sizeof(int));
+        file.read((char *)&player1.wins, sizeof(player1.wins));
 
         file.read((char *)&len2, sizeof(len2));
         player2.name.resize(len2);
         file.read(&player2.name[0], len2);
-        file.read((char *)&player2.wins, sizeof(int));
-
+        file.read((char *)&player2.wins, sizeof(player2.wins));
         file.read((char *)&player1Turn, sizeof(player1Turn));
-
-        for (int i = 0; i < 3; ++i)
-            file.read(board[i], 3);
+        file.read((char *)board, sizeof(board));
 
         file.close();
         gameLoaded = true;
-        cout << GREEN << "📂 Prethodna igra je učitana!\n"
+        cout << GREEN << "📂 Igra je učitana!\n"
              << RESET;
         return true;
     }
@@ -207,24 +206,26 @@ public:
     {
         if (!gameLoaded && (player1.name.empty() || player2.name.empty()))
         {
-            cout << RED << "⚠️  Prvo dodajte igrače!\n"
+            cout << RED << "⚠️ Prvo dodajte igrače!\n"
                  << RESET;
             return;
         }
-        int move;
         if (!gameLoaded)
             resetBoard();
 
+        int move;
         while (true)
         {
             displayBoard();
-            cout << YELLOW << "🎲 " << getCurrentPlayer().name << " (" << getCurrentPlayer().symbol << "), unesite potez (1-9, 0 za spremanje): " << RESET;
+            cout << YELLOW << "🎲 " << getCurrentPlayer().name << " (" << getCurrentPlayer().symbol << "), potez (1-9) ili 0 za spremiti i izaći: " << RESET;
             cin >> move;
 
             if (move == 0)
             {
                 saveGame();
-                continue;
+                cout << BLUE << "🔁 Povratak u izbornik.\n"
+                     << RESET;
+                return;
             }
 
             if (!makeMove(move))
@@ -237,13 +238,12 @@ public:
             if (checkWin())
             {
                 displayBoard();
-                cout << GREEN << "🏆 Čestitke! 🎉 Igrač " << getCurrentPlayer().name << " je pobijedio! 🥳\n"
+                cout << GREEN << "🏆 Čestitke! " << getCurrentPlayer().name << " je pobijedio!\n"
                      << RESET;
                 getCurrentPlayer().wins++;
                 updateLeaderboard();
                 break;
             }
-
             if (isDraw())
             {
                 displayBoard();
@@ -258,7 +258,7 @@ public:
         saveGame();
         gameLoaded = false;
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cout << CYAN << "🔁 Pritisnite Enter za povratak u izbornik..." << RESET;
+        cout << CYAN << "🔁 Enter za povratak u izbornik..." << RESET;
         cin.get();
     }
 
@@ -266,74 +266,69 @@ public:
     {
         cout << BLUE << "\n📘 Pravila Križić-Kružić\n"
              << RESET;
-        cout << "1️⃣ Dva igrača naizmjenično biraju pozicije od 1 do 9.\n";
-        cout << "2️⃣ Cilj je složiti 3 ista znaka (X ili O) u liniji.\n";
-        cout << "3️⃣ Ako je ploča puna, a nitko nije pobijedio – igra je neriješena.\n";
-        cout << "4️⃣ Igra se može spremiti u bilo kojem trenutku i ponovno učitati.\n";
+        cout << "1️⃣ Dva igrača naizmjenično biraju pozicije 1-9.\n";
+        cout << "2️⃣ Cilj je složiti 3 ista znaka u liniji.\n";
+        cout << "3️⃣ Ako je ploča puna bez pobjednika – igra je neriješena.\n";
+        cout << "4️⃣ Igru možete spremiti u bilo kojem trenutku.\n";
     }
 
     void showLeaderboard()
     {
         cout << MAGENTA << "\n📊 Leaderboard:\n"
              << RESET;
-        ifstream file("leaderboard.bin", ios::binary);
+        ifstream file("leaderboard.dat", ios::binary);
         if (!file)
-        {
-            cout << "Nema dostupnih podataka.\n";
             return;
-        }
 
-        vector<pair<string, int>> scores;
-        while (file.peek() != EOF)
+        map<string, int> scores;
+        size_t len;
+        string name;
+        int wins;
+        while (file.read((char *)&len, sizeof(len)))
         {
-            size_t len;
-            string name;
-            int wins;
-            file.read((char *)&len, sizeof(len));
             name.resize(len);
             file.read(&name[0], len);
             file.read((char *)&wins, sizeof(wins));
-            scores.push_back({name, wins});
+            scores[name] = wins;
         }
 
-        sort(scores.rbegin(), scores.rend(), [](auto &a, auto &b)
-             { return a.second < b.second; });
+        vector<pair<int, string>> sorted;
+        for (auto &s : scores)
+            sorted.push_back({s.second, s.first});
+        sort(sorted.rbegin(), sorted.rend());
 
-        for (auto &pair : scores)
-            cout << "🏅 " << pair.first << " - " << pair.second << " pobjeda\n";
-
-        file.close();
+        for (auto &entry : sorted)
+            cout << "🥇 " << entry.second << " - " << entry.first << " pobjeda\n";
     }
 
     void updateLeaderboard()
     {
         map<string, int> scores;
-        ifstream infile("leaderboard.bin", ios::binary);
-        while (infile.peek() != EOF)
+        ifstream in("leaderboard.dat", ios::binary);
+        size_t len;
+        string name;
+        int wins;
+        while (in.read((char *)&len, sizeof(len)))
         {
-            size_t len;
-            string name;
-            int wins;
-            infile.read((char *)&len, sizeof(len));
             name.resize(len);
-            infile.read(&name[0], len);
-            infile.read((char *)&wins, sizeof(wins));
+            in.read(&name[0], len);
+            in.read((char *)&wins, sizeof(wins));
             scores[name] = wins;
         }
-        infile.close();
+        in.close();
 
         scores[player1.name] = player1.wins;
         scores[player2.name] = player2.wins;
 
-        ofstream outfile("leaderboard.bin", ios::binary | ios::trunc);
+        ofstream out("leaderboard.dat", ios::binary);
         for (auto &pair : scores)
         {
-            size_t len = pair.first.size();
-            outfile.write((char *)&len, sizeof(len));
-            outfile.write(pair.first.c_str(), len);
-            outfile.write((char *)&pair.second, sizeof(pair.second));
+            len = pair.first.size();
+            out.write((char *)&len, sizeof(len));
+            out.write(pair.first.c_str(), len);
+            out.write((char *)&pair.second, sizeof(pair.second));
         }
-        outfile.close();
+        out.close();
     }
 };
 
@@ -346,10 +341,10 @@ void showMenu(Game &game)
         cout << YELLOW << "\n📋 GLAVNI IZBORNIK:\n"
              << RESET;
         cout << "1️⃣ Dodaj igrače 👥\n";
-        cout << "2️⃣ Pokreni novu igru 🎮\n";
-        cout << "3️⃣ Učitaj prethodnu igru 💾\n";
-        cout << "4️⃣ Prikaži pravila 📘\n";
-        cout << "5️⃣ Prikaži leaderboard 🏆\n";
+        cout << "2️⃣ Nova igra 🎮\n";
+        cout << "3️⃣ Učitaj igru 💾\n";
+        cout << "4️⃣ Pravila 📘\n";
+        cout << "5️⃣ Leaderboard 🏆\n";
         cout << "6️⃣ Izlaz ❌\n";
         cout << CYAN << "Unesite izbor: " << RESET;
         cin >> choice;
@@ -385,7 +380,6 @@ void showMenu(Game &game)
 
         cout << "\n"
              << string(60, '=') << "\n";
-
     } while (choice != 6);
 }
 
